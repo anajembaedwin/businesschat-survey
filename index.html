@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Survey — Help Us Build Something Useful</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Satoshi:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --g: #16a34a; --g2: #bbf7d0; --g3: #dcfce7;
+  --ink: #0c1a12; --ink2: #3d5c48; --muted: #8aab97;
+  --bg: #f0faf4; --white: #ffffff; --wa: #25D366;
+  --gold: #f59e0b; --border: #dce8e1;
+}
+
+html, body { height: 100%; font-family: 'Satoshi', sans-serif; background: var(--bg); color: var(--ink); }
+
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+.bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bubble { position: absolute; border-radius: 50%; background: var(--g); opacity: 0.04; animation: float linear infinite; }
+@keyframes float {
+  0% { transform: translateY(110vh) scale(0); opacity: 0; }
+  10% { opacity: 0.06; } 90% { opacity: 0.06; }
+  100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+}
+
+#app {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 24px 32px;
+}
+
+.progress-wrap { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--g2); z-index: 10; }
+.progress-fill { height: 100%; background: var(--g); border-radius: 0 4px 4px 0; transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+
+.step-counter {
+  position: fixed; top: 14px; right: 18px;
+  font-size: 12px; color: var(--muted); font-weight: 500; z-index: 10;
+  font-family: 'Cabinet Grotesk', sans-serif;
+  background: var(--white); padding: 4px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+}
+
+.back-btn {
+  position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 100px;
+  background: var(--white); border: 1.5px solid var(--border);
+  font-family: 'Cabinet Grotesk', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink2);
+  cursor: pointer; z-index: 10; transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(12,26,18,0.06);
+  opacity: 0; pointer-events: none; white-space: nowrap;
+}
+.back-btn.visible { opacity: 1; pointer-events: all; }
+.back-btn:hover { background: var(--g3); border-color: var(--g); color: var(--g); transform: translateX(-50%) translateY(-1px); }
+
+.card {
+  background: var(--white); border-radius: 28px; padding: 48px 48px 40px;
+  max-width: 640px; width: 100%;
+  box-shadow: 0 0 0 1px rgba(22,163,74,0.08), 0 4px 6px rgba(12,26,18,0.04), 0 24px 48px rgba(12,26,18,0.08);
+  position: relative; overflow: hidden;
+}
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--g), var(--wa)); }
+
+/* SPLASH */
+.splash-icon { font-size: 64px; display: block; margin-bottom: 18px; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+.splash-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--g3); color: var(--g); padding: 6px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 600; font-family: 'Cabinet Grotesk', sans-serif;
+  margin-bottom: 16px; letter-spacing: 0.04em;
+}
+.splash-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 28px; font-weight: 900; line-height: 1.2; color: var(--ink); margin-bottom: 12px; }
+.splash-body { font-size: 15px; color: var(--ink2); line-height: 1.7; margin-bottom: 22px; }
+.splash-body strong { color: var(--ink); font-weight: 600; }
+
+.explainer-box { background: var(--bg); border-radius: 16px; padding: 18px 20px; margin-bottom: 22px; border: 1.5px solid var(--g2); }
+.explainer-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 11px; font-weight: 700; color: var(--g); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+.explainer-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.explainer-row:last-child { margin-bottom: 0; }
+.explainer-emoji { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.explainer-text { font-size: 13px; color: var(--ink2); line-height: 1.55; }
+.explainer-text strong { color: var(--ink); }
+
+.time-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+.time-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; flex-shrink: 0; }
+
+.start-btn {
+  width: 100%; padding: 17px;
+  background: var(--g); color: white; border: none; border-radius: 16px;
+  font-family: 'Cabinet Grotesk', sans-serif; font-size: 17px; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.start-btn:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(22,163,74,0.3); }
+
+/* QUESTIONS */
+.q-emoji { font-size: 46px; display: block; margin-bottom: 14px; animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { 0% { transform: scale(0) rotate(-20deg); } 100% { transform: scale(1) rotate(0deg); } }
+
+.q-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--g); font-weight: 600; margin-bottom: 6px; font-family: 'Cabinet Grotesk', sans-serif; }
+.q-text { font-family: 'Cabinet Grotesk', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.3; color: var(--ink); margin-bottom: 6px; }
+.q-sub { font-size: 14px; color: var(--ink2); font-weight: 400; line-height: 1.6; margin-bottom: 20px; }
+
+.plain-hint { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 11px 14px; margin-bottom: 18px; display: flex; gap: 8px; align-items: flex-start; }
+.plain-hint-icon { font-size: 16px; flex-shrink: 0; }
+.plain-hint-text { font-size: 13px; color: #78350f; line-height: 1.55; }
+
+/* OPTIONS */
+.options { display: flex; flex-direction: column; gap: 8px; }
+.options.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt {
+  display: flex; align-items: center; gap: 11px; padding: 13px 16px;
+  border: 2px solid var(--g3); border-radius: 13px; cursor: pointer; transition: all 0.2s;
+  background: var(--white); font-size: 14px; font-weight: 500; color: var(--ink);
+  font-family: 'Satoshi', sans-serif; position: relative; overflow: hidden; text-align: left;
+}
+.opt::after { content: ''; position: absolute; inset: 0; background: var(--g); opacity: 0; transition: opacity 0.2s; }
+.opt:hover { border-color: var(--g); transform: translateY(-2px); box-shadow: 0 5px 16px rgba(22,163,74,0.12); }
+.opt:hover::after { opacity: 0.04; }
+.opt:active { transform: scale(0.98); }
+.opt.selected { border-color: var(--g); background: var(--g3); }
+.opt-icon { font-size: 20px; flex-shrink: 0; }
+.opt-text { flex: 1; }
+.opt-note { display: block; font-size: 11px; color: var(--muted); font-weight: 300; margin-top: 2px; }
+.opt-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--g2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-left: auto; font-size: 11px; }
+.opt.selected .opt-check { background: var(--g); border-color: var(--g); color: white; }
+
+/* SCALE */
+.scale-wrap { display: flex; gap: 5px; margin-bottom: 7px; }
+.scale-btn { flex: 1; height: 44px; border: 2px solid var(--g3); border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--ink2); background: var(--white); font-family: 'Cabinet Grotesk', sans-serif; transition: all 0.15s; }
+.scale-btn:hover { border-color: var(--g); background: var(--g3); color: var(--g); transform: translateY(-2px); }
+.scale-btn.selected { background: var(--g); border-color: var(--g); color: white; }
+.scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+
+/* INPUTS */
+.text-input { width: 100%; padding: 13px 16px; border: 2px solid var(--g3); border-radius: 13px; font-family: 'Satoshi', sans-serif; font-size: 14px; color: var(--ink); background: var(--white); outline: none; transition: border-color 0.2s; resize: none; min-height: 96px; }
+.text-input:focus { border-color: var(--g); }
+.text-input::placeholder { color: var(--muted); }
+.email-input { width: 100%; padding: 13px 16px; border: 2px solid var(--g3); border-radius: 13px; font-family: 'Satoshi', sans-serif; font-size: 14px; color: var(--ink); background: var(--white); outline: none; transition: border-color 0.2s; }
+.email-input:focus { border-color: var(--g); }
+.email-input::placeholder { color: var(--muted); }
+
+/* BUTTONS */
+.next-btn { margin-top: 18px; width: 100%; padding: 14px; background: var(--g); color: white; border: none; border-radius: 13px; font-family: 'Cabinet Grotesk', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.next-btn:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(22,163,74,0.3); }
+.next-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+.skip-link { text-align: center; margin-top: 10px; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.skip-link:hover { color: var(--ink2); }
+
+/* RESULT */
+.result-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--g3); color: var(--g); padding: 7px 14px; border-radius: 100px; font-size: 13px; font-weight: 600; font-family: 'Cabinet Grotesk', sans-serif; margin-bottom: 14px; }
+.result-headline { font-family: 'Cabinet Grotesk', sans-serif; font-size: 26px; font-weight: 900; line-height: 1.2; margin-bottom: 10px; }
+.result-body { font-size: 15px; color: var(--ink2); line-height: 1.7; margin-bottom: 20px; }
+.thank-box { background: var(--g3); border-radius: 13px; padding: 15px 17px; margin-bottom: 18px; font-size: 14px; color: var(--ink2); line-height: 1.6; }
+.result-secondary { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--ink2); padding: 12px 20px; border-radius: 12px; border: 2px solid var(--border); font-family: 'Cabinet Grotesk', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.result-secondary:hover { background: var(--bg); }
+.stat-row { display: flex; gap: 10px; margin-top: 18px; }
+.stat-box { flex: 1; background: var(--bg); border-radius: 12px; padding: 13px; text-align: center; }
+.stat-num { font-family: 'Cabinet Grotesk', sans-serif; font-size: 22px; font-weight: 900; color: var(--g); }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ANIMATIONS */
+.slide-enter { animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+.slide-back-enter { animation: slideBackIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes slideIn { 0% { opacity: 0; transform: translateX(60px) scale(0.96); } 100% { opacity: 1; transform: none; } }
+@keyframes slideBackIn { 0% { opacity: 0; transform: translateX(-60px) scale(0.96); } 100% { opacity: 1; transform: none; } }
+
+.confetti-piece { position: fixed; pointer-events: none; z-index: 100; animation: cFall 1.2s ease-in forwards; }
+@keyframes cFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+@media (max-width: 600px) {
+  .card { padding: 30px 20px 26px; border-radius: 20px; }
+  .q-text, .splash-title { font-size: 20px; }
+  .options.grid-2 { grid-template-columns: 1fr; }
+  .stat-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="bubbles" id="bubbles"></div>
+<div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+<button class="back-btn" id="backBtn" onclick="goBack()">← Go back</button>
+<div class="step-counter" id="stepCounter" style="display:none"></div>
+
+<div id="app"><div class="card" id="card"></div></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ⚙️  CONFIG  —  replace both values before deploying
+// ══════════════════════════════════════════════════════
+const SHEET_URL    = 'YOUR_APPS_SCRIPT_URL_HERE';
+const SUBMIT_TOKEN = 'YOUR_SECRET_TOKEN_HERE';
+// ══════════════════════════════════════════════════════
+
+// bubbles
+const bEl = document.getElementById('bubbles');
+for (let i = 0; i < 10; i++) {
+  const b = document.createElement('div'); b.className = 'bubble';
+  const s = 40 + Math.random() * 120;
+  b.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;
+  bEl.appendChild(b);
+}
+
+// ── NODES ──
+const nodes = {
+  splash: { id:'splash', type:'splash' },
+
+  role: {
+    id:'role', emoji:'👋', label:'First things first',
+    question:'Which one sounds most like you?',
+    sub:'No right or wrong answer — just pick the closest one.',
+    hint:'Not sure? Think about what you mostly do at work or in your business every day.',
+    type:'choice',
+    options:[
+      { icon:'🏪', text:'I own or run a business', note:'e.g. shop, small company, solo work', next:'biz_size' },
+      { icon:'📣', text:'I do sales or marketing', note:'e.g. I sell things or promote products', next:'team_channel' },
+      { icon:'🛠️', text:'I handle customer support', note:'e.g. I reply to customer questions', next:'support_vol' },
+      { icon:'👨‍💻', text:'I build or manage tech / software', note:'e.g. developer, IT, systems manager', next:'dev_use' },
+    ]
+  },
+
+  biz_size: {
+    id:'biz_size', emoji:'🏗️', label:'Your business',
+    question:'How many people work in your business?',
+    sub:'Including yourself — a rough number is fine.',
+    type:'choice',
+    options:[
+      { icon:'🙋', text:'Just me', next:'wa_today' },
+      { icon:'👥', text:'2 to 10 people', next:'wa_today' },
+      { icon:'🏢', text:'11 to 50 people', next:'wa_today' },
+      { icon:'🏙️', text:'More than 50 people', next:'enterprise_note' },
+    ]
+  },
+  enterprise_note: {
+    id:'enterprise_note', emoji:'🤝', label:'Good to know!',
+    question:'Larger teams have bigger needs.',
+    sub:'We\'re building features specifically for large teams — separate logins for each staff member, manager dashboards, and reports. Your input is especially useful.',
+    type:'choice',
+    options:[ { icon:'✅', text:"Got it — let's continue", next:'wa_today' } ]
+  },
+
+  team_channel: {
+    id:'team_channel', emoji:'📊', label:'How you reach customers',
+    question:'How do you currently talk to customers on WhatsApp?',
+    hint:'WhatsApp is the green chat app. WhatsApp Business is a free version made specially for businesses — it looks the same but has extra features.',
+    type:'choice',
+    options:[
+      { icon:'📱', text:'My personal WhatsApp number', note:'just a regular number', next:'pain_points' },
+      { icon:'🤝', text:'WhatsApp Business app', note:'the special business version', next:'pain_points' },
+      { icon:'🔧', text:'Another tool or software', note:'something I pay for or use at work', next:'current_frustration' },
+      { icon:'🚫', text:"We don't use WhatsApp for this yet", note:'we use calls, email, or something else', next:'wa_blocker' },
+    ]
+  },
+  current_frustration: {
+    id:'current_frustration', emoji:'🔍', label:'What bothers you most',
+    question:"What's the biggest problem with the tool you're using now?",
+    sub:'Be honest — this is the most useful thing you can tell us.',
+    type:'choice',
+    options:[
+      { icon:'💸', text:"It costs too much", next:'pain_points' },
+      { icon:'🐢', text:"It's slow or keeps breaking", next:'pain_points' },
+      { icon:'🧩', text:"It's missing things I need", next:'pain_points' },
+      { icon:'😵', text:"It's too hard to figure out", next:'pain_points' },
+    ]
+  },
+  wa_blocker: {
+    id:'wa_blocker', emoji:'🌱', label:"What's stopping you",
+    question:"Why haven't you used WhatsApp for your business yet?",
+    type:'choice',
+    options:[
+      { icon:'😕', text:"I don't know where to start", next:'pain_points' },
+      { icon:'💰', text:"I'm worried about the cost", next:'pain_points' },
+      { icon:'📋', text:"I'm not sure if it's allowed or safe", next:'pain_points' },
+      { icon:'🤷', text:"I'm not sure my customers use it", next:'pain_points' },
+    ]
+  },
+
+  support_vol: {
+    id:'support_vol', emoji:'💬', label:'How busy you are',
+    question:'Roughly how many customer messages do you handle per week?',
+    sub:'Count all platforms — WhatsApp, SMS, calls, email, everywhere.',
+    type:'choice',
+    options:[
+      { icon:'🟢', text:'Fewer than 50 messages', next:'pain_points' },
+      { icon:'🟡', text:'50 to 200 messages', next:'pain_points' },
+      { icon:'🟠', text:'200 to 1,000 messages', next:'pain_points' },
+      { icon:'🔴', text:'More than 1,000 messages', next:'agent_count' },
+    ]
+  },
+  agent_count: {
+    id:'agent_count', emoji:'🧑‍💼', label:'Your team',
+    question:'How many people are replying to those messages?',
+    type:'choice',
+    options:[
+      { icon:'1️⃣', text:'1 to 3 people', next:'pain_points' },
+      { icon:'👥', text:'4 to 10 people', next:'pain_points' },
+      { icon:'🏢', text:'More than 10 people', next:'pain_points' },
+    ]
+  },
+
+  dev_use: {
+    id:'dev_use', emoji:'⚙️', label:'What you want to build',
+    question:"What's your main goal with WhatsApp for your business?",
+    type:'choice',
+    options:[
+      { icon:'🔗', text:'Connect WhatsApp to our existing system', note:'e.g. link it to our website or CRM', next:'pain_points' },
+      { icon:'🤖', text:'Build automatic replies / a chatbot', note:'so it responds without a person', next:'pain_points' },
+      { icon:'📊', text:'Track and analyse conversations', next:'pain_points' },
+      { icon:'🏗️', text:"I'm just exploring what's possible", next:'pain_points' },
+    ]
+  },
+
+  wa_today: {
+    id:'wa_today', emoji:'📲', label:'Right now',
+    question:'How are you using WhatsApp for your business at the moment?',
+    hint:'Most small businesses start with a personal number — that\'s completely normal and nothing to be embarrassed about.',
+    type:'choice',
+    options:[
+      { icon:'📱', text:"Personal number — gets disorganised", next:'pain_points' },
+      { icon:'✅', text:'WhatsApp Business app (the free one)', next:'pain_points' },
+      { icon:'🔌', text:"I'm already using a paid tool or API", next:'pain_points' },
+      { icon:'🚫', text:"Not using WhatsApp for business yet", next:'pain_points' },
+    ]
+  },
+
+  pain_points: {
+    id:'pain_points', emoji:'🎯', label:'What matters most',
+    question:'Which of these problems would help your business most if solved?',
+    sub:'Pick the one that hits closest to home.',
+    type:'choice',
+    options:[
+      { icon:'👩‍💼', text:'Multiple staff replying from one WhatsApp number', note:'so your whole team uses one account', next:'pain_score' },
+      { icon:'🤖', text:'Automatic replies for common questions', note:'the app answers so your team doesn\'t have to', next:'pain_score' },
+      { icon:'📋', text:'Saving customer history and notes', note:'so you remember what each customer told you before', next:'pain_score' },
+      { icon:'📊', text:'Reports on how quickly your team responds', note:'response times, message counts, performance', next:'pain_score' },
+    ]
+  },
+
+  pain_score: {
+    id:'pain_score', emoji:'⭐', label:'Be honest with us',
+    question:'How stressful or painful is managing customer WhatsApp messages for you right now?',
+    sub:'1 = no stress at all. 10 = it\'s a daily nightmare.',
+    type:'scale', min:1, max:10,
+    labels:['No stress 😌','Daily nightmare 🔥'],
+    nextId:'pricing'
+  },
+
+  pricing: {
+    id:'pricing', emoji:'💰', label:'Money talk',
+    question:'If a tool completely solved this problem, what would you pay per month?',
+    sub:"No right or wrong answer — this helps us price fairly for businesses of all sizes.",
+    type:'choice',
+    options:[
+      { icon:'🆓', text:'Nothing — it must be free', next:'open_feedback' },
+      { icon:'💵', text:'Up to ₦10,000 / $10 a month', next:'open_feedback' },
+      { icon:'💳', text:'₦10,000–₦50,000 / $10–$50 a month', next:'open_feedback' },
+      { icon:'🏦', text:'More than ₦50,000 / $50 a month', next:'open_feedback' },
+    ]
+  },
+
+  open_feedback: {
+    id:'open_feedback', emoji:'📝', label:'In your own words',
+    question:'What is the ONE thing you wish WhatsApp made easier for your business?',
+    sub:'Optional. But if you write something here, we will read every single word.',
+    type:'text',
+    placeholder:'e.g. "I want my staff to each have their own login so I can see who replied to what..."',
+    nextId:'email_capture'
+  },
+
+  email_capture: {
+    id:'email_capture', emoji:'🙏', label:"Almost done!",
+    question:'Can we let you know when this tool is ready?',
+    sub:"Leave your email and we'll send you one message when we launch — nothing else, ever.",
+    type:'email',
+    placeholder:'your@email.com',
+    nextId:'result'
+  },
+
+  result: { id:'result', type:'result' }
+};
+
+// ── STATE ──
+let current = 'splash', navHistory = [], answers = {}, submitted = false;
+const TOTAL = 8;
+
+function getStep() {
+  const order = ['role','biz_size|team_channel|support_vol|dev_use|enterprise_note','wa_today|current_frustration|wa_blocker|agent_count','pain_points','pain_score','pricing','open_feedback','email_capture'];
+  for (let i = 0; i < order.length; i++) if (order[i].split('|').includes(current)) return i+1;
+  return TOTAL;
+}
+
+function chrome() {
+  const isSplash = current==='splash', isResult = current==='result';
+  document.getElementById('progress').style.width = isResult ? '100%' : isSplash ? '0%' : `${(getStep()/TOTAL)*100}%`;
+  const sc = document.getElementById('stepCounter');
+  if (isSplash) sc.style.display='none';
+  else if (isResult) { sc.style.display=''; sc.textContent='✓ Done!'; }
+  else { sc.style.display=''; sc.textContent=`${getStep()} of ${TOTAL}`; }
+  const bb = document.getElementById('backBtn');
+  navHistory.length > 0 && !isResult ? bb.classList.add('visible') : bb.classList.remove('visible');
+}
+
+function render(nodeId, dir='forward') {
+  current = nodeId; chrome();
+  const node = nodes[nodeId], card = document.getElementById('card');
+  card.classList.remove('slide-enter','slide-back-enter');
+  void card.offsetWidth;
+  card.classList.add(dir==='back' ? 'slide-back-enter' : 'slide-enter');
+  if (node.type==='splash') { renderSplash(card); return; }
+  if (node.type==='result') { renderResult(card); return; }
+
+  let h = `<span class="q-emoji">${node.emoji}</span>
+    <div class="q-label">${node.label}</div>
+    <div class="q-text">${node.question}</div>
+    ${node.sub ? `<div class="q-sub">${node.sub}</div>` : ''}
+    ${node.hint ? `<div class="plain-hint"><span class="plain-hint-icon">💬</span><div class="plain-hint-text">${node.hint}</div></div>` : ''}`;
+
+  if (node.type==='choice') {
+    const g = node.options.length===4 ? 'grid-2' : '';
+    h += `<div class="options ${g}">`;
+    node.options.forEach((o,i) => {
+      const s = answers[nodeId]===o.text;
+      h += `<button class="opt${s?' selected':''}" onclick="pick('${nodeId}',${i})">
+        <span class="opt-icon">${o.icon}</span>
+        <span class="opt-text">${o.text}${o.note?`<span class="opt-note">${o.note}</span>`:''}</span>
+        <span class="opt-check">${s?'✓':''}</span></button>`;
+    });
+    h += '</div>';
+  }
+  if (node.type==='scale') {
+    const p = answers['pain_score'];
+    h += `<div class="scale-wrap">`;
+    for (let v=node.min;v<=node.max;v++) h += `<button class="scale-btn${p===v?' selected':''}" data-val="${v}" onclick="pickScale(${v})">${v}</button>`;
+    h += `</div><div class="scale-labels"><span>${node.labels[0]}</span><span>${node.labels[1]}</span></div>
+      <button class="next-btn" id="nxtBtn" onclick="advance()" ${p?'':'disabled'}>Continue →</button>`;
+  }
+  if (node.type==='text') {
+    const p = answers['open_feedback']||'';
+    h += `<textarea class="text-input" id="txtInp" placeholder="${node.placeholder}" rows="4">${p}</textarea>
+      <button class="next-btn" onclick="advance()">Continue →</button>
+      <div class="skip-link" onclick="skipText()">Skip this question →</div>`;
+  }
+  if (node.type==='email') {
+    const p = answers['email']||'', ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p);
+    h += `<input type="email" class="email-input" id="emlInp" placeholder="${node.placeholder}" value="${p}" oninput="checkEmail()" />
+      <button class="next-btn" id="nxtBtn" onclick="advance()" ${ok?'':'disabled'}>Notify me when it's ready 🚀</button>
+      <div class="skip-link" onclick="skipEmail()">Finish without leaving email</div>`;
+  }
+  card.innerHTML = h;
+}
+
+function renderSplash(card) {
+  card.innerHTML = `
+    <span class="splash-icon">💬</span>
+    <div class="splash-tag">✦ Quick Survey · 2 minutes</div>
+    <div class="splash-title">Help us build something your business actually needs</div>
+    <div class="splash-body">
+      We're building a <strong>tool to help businesses manage their WhatsApp messages</strong> — 
+      things like letting multiple staff reply from one number, sending automatic responses, 
+      and keeping records of every conversation.<br><br>
+      Before we finish building it, we want to hear from <strong>real business owners and workers</strong> 
+      like you — to make sure we're solving the right problems.
+    </div>
+    <div class="explainer-box">
+      <div class="explainer-title">What this survey covers</div>
+      <div class="explainer-row"><span class="explainer-emoji">📱</span><div class="explainer-text"><strong>How you use WhatsApp today</strong> — personal number, business app, or something else.</div></div>
+      <div class="explainer-row"><span class="explainer-emoji">😤</span><div class="explainer-text"><strong>Your biggest frustrations</strong> — what wastes your time or stresses you out with customer messages.</div></div>
+      <div class="explainer-row"><span class="explainer-emoji">💰</span><div class="explainer-text"><strong>What you'd pay</strong> — if a tool genuinely fixed these problems, what would feel fair.</div></div>
+      <div class="explainer-row"><span class="explainer-emoji">🔒</span><div class="explainer-text"><strong>Your answers are private</strong> — we will never share or sell your information. Your email (if you give it) is only used to let you know when the tool launches.</div></div>
+    </div>
+    <div class="time-badge"><div class="time-dot"></div> 8 questions · takes about 2 minutes</div>
+    <button class="start-btn" onclick="startSurvey()">Let's go 👉</button>`;
+}
+
+function startSurvey() { navHistory=[]; render('role','forward'); }
+
+function pick(nodeId, idx) {
+  const opt = nodes[nodeId].options[idx];
+  navHistory.push({ nodeId, answers: JSON.parse(JSON.stringify(answers)) });
+  answers[nodeId] = opt.text;
+  document.querySelectorAll('.opt').forEach((b,i) => {
+    b.classList.toggle('selected', i===idx);
+    b.querySelector('.opt-check').innerHTML = i===idx ? '✓' : '';
+  });
+  setTimeout(() => render(opt.next,'forward'), 280);
+}
+
+function pickScale(val) {
+  answers['pain_score'] = val;
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.toggle('selected', parseInt(b.dataset.val)===val));
+  const btn = document.getElementById('nxtBtn'); if (btn) btn.disabled=false;
+}
+
+function checkEmail() {
+  const v = document.getElementById('emlInp')?.value||'';
+  const btn = document.getElementById('nxtBtn');
+  if (btn) btn.disabled = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function advance() {
+  const node = nodes[current];
+  if (node.type==='text') answers['open_feedback'] = document.getElementById('txtInp')?.value?.trim()||'';
+  if (node.type==='email') answers['email'] = document.getElementById('emlInp')?.value?.trim()||'';
+  navHistory.push({ nodeId:current, answers:JSON.parse(JSON.stringify(answers)) });
+  render(node.nextId,'forward');
+}
+function skipText() { answers['open_feedback']=''; navHistory.push({nodeId:current,answers:JSON.parse(JSON.stringify(answers))}); render(nodes[current].nextId,'forward'); }
+function skipEmail() { answers['email']=''; navHistory.push({nodeId:current,answers:JSON.parse(JSON.stringify(answers))}); render(nodes[current].nextId,'forward'); }
+function goBack() {
+  if (!navHistory.length) return;
+  const prev = navHistory.pop(); answers=prev.answers; render(prev.nodeId,'back');
+}
+
+// ── SECURE SUBMIT ──
+async function submitData() {
+  if (submitted) return;
+  if (!SHEET_URL || SHEET_URL.includes('YOUR_')) return;
+  submitted = true;
+
+  // obfuscate token minimally — not bulletproof but stops casual scraping
+  const t = SUBMIT_TOKEN.split('').reverse().join('');
+
+  const payload = {
+    _t: btoa(t),   // base64 of reversed token — validated server-side
+    ts: new Date().toISOString(),
+    role:             answers['role']||'',
+    biz_size:         answers['biz_size']||'',
+    team_channel:     answers['team_channel']||'',
+    frustration:      answers['current_frustration']||'',
+    wa_blocker:       answers['wa_blocker']||'',
+    support_vol:      answers['support_vol']||'',
+    agent_count:      answers['agent_count']||'',
+    dev_use:          answers['dev_use']||'',
+    wa_today:         answers['wa_today']||'',
+    top_need:         answers['pain_points']||'',
+    pain_score:       answers['pain_score']||'',
+    pricing:          answers['pricing']||'',
+    open_feedback:    answers['open_feedback']||'',
+    email:            answers['email']||'',
+  };
+
+  try {
+    await fetch(SHEET_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+  } catch(e) { console.warn('Submit silently failed'); }
+}
+
+function renderResult(card) {
+  submitData();
+  const role=answers['role']||'', pain=answers['pain_points']||'', email=answers['email']||'';
+
+  let p = { icon:'🏆', badge:'Thank you so much',
+    headline:"Your answers will genuinely shape what we build.",
+    body:"Managing customer messages on WhatsApp is a real problem for thousands of businesses. Your input — especially knowing what frustrates you most — helps us build something that actually works in the real world." };
+
+  if (role.includes('own or run')) p = { icon:'🏪', badge:'Business owner — noted',
+    headline:"Business owners like you are exactly who we're building for.",
+    body:"The headache of managing customer messages from a personal phone, missing messages, no records — we hear it constantly. Your answers will shape the solution." };
+  else if (role.includes('sales or marketing')) p = { icon:'📣', badge:'Sales & marketing — perfect fit',
+    headline:"Reaching customers at scale on WhatsApp is hard. We want to fix that.",
+    body:"Whether you're sending offers or following up on leads, you need a proper system — not a personal number with no history. Your answers help us get the features right." };
+  else if (role.includes('support')) p = { icon:'🛠️', badge:'Support team — valuable input',
+    headline:"One inbox, your whole team — no more chaos.",
+    body:"We know what it's like when multiple staff need to reply and nothing is organised. Your experience is exactly what we're designing around." };
+  else if (role.includes('tech')) p = { icon:'⚙️', badge:'Tech/developer — great insight',
+    headline:"We're building on official APIs — no workarounds, no bans.",
+    body:"Proper webhooks, clean integrations, built to scale. Your technical perspective helps us create something developers will actually want to work with." };
+
+  confetti();
+
+  card.innerHTML = `
+    <span class="q-emoji" style="font-size:50px">${p.icon}</span>
+    <div class="result-badge">✓ ${p.badge}</div>
+    <div class="result-headline">${p.headline}</div>
+    <div class="result-body">${p.body}</div>
+    <div class="thank-box">${email
+      ? `We'll send one email to <strong>${email}</strong> when we're ready to launch. Nothing else.`
+      : `You didn't leave an email, but your answers still help enormously. Thank you for your time.`
+    }</div>
+    <button class="result-secondary" onclick="restart()">↩ Start over</button>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num">340+</div><div class="stat-label">responses so far</div></div>
+      <div class="stat-box"><div class="stat-num">2025</div><div class="stat-label">target launch</div></div>
+      <div class="stat-box"><div class="stat-num">Free</div><div class="stat-label">plan available</div></div>
+    </div>`;
+}
+
+function restart() { answers={}; navHistory=[]; submitted=false; render('splash'); }
+
+function confetti() {
+  const colors=['#16a34a','#25D366','#bbf7d0','#f59e0b','#3b82f6','#fca5a5','#ffffff'];
+  for (let i=0;i<55;i++) setTimeout(()=>{
+    const el=document.createElement('div'); el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${0.9+Math.random()*1.4}s;animation-delay:${Math.random()*0.5}s`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2400);
+  }, i*20);
+}
+
+render('splash');
+</script>
+</body>
+</html>
