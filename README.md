@@ -13,19 +13,19 @@ Responses are collected via Google Sheets.
 
 ## Setup
 
-1. Create a Google Apps Script web app (see below)
-2. Open `index.html` and replace:
-   - `YOUR_APPS_SCRIPT_URL_HERE` with your Apps Script deployment URL
-   - `YOUR_SECRET_TOKEN_HERE` with a secret string of your choice (e.g. `bzy-2025-xk91`)
-3. Use the same token in the Apps Script code
+1. Create a Google Apps Script web app (see below) and set a secret token in its script properties.
+2. Deploy a Cloudflare Worker that receives the survey POST and forwards it to the Apps Script URL together with the secret token. Store the token as a Worker secret (`SECRET_TOKEN`), never in this repo.
+3. Open `index.html` and set `SHEET_URL` to your Worker URL (the public endpoint, not the Apps Script URL).
+
+> **Do not put the secret token in `index.html`.** Everything in that file is public once it is on GitHub Pages. The token must live only in the Worker and the Apps Script.
 
 ## Google Apps Script setup
 
 1. Go to script.google.com
 2. Create a new project
-3. Paste the Apps Script code from the `/docs` folder
-4. Deploy as Web App — execute as Me, access to Anyone
-5. Copy the deployment URL into `index.html`
+3. Add a script that validates the token, then appends the submitted fields as a row in your Sheet
+4. Deploy as Web App: execute as Me, access to Anyone
+5. Give the deployment URL and the token to the Worker as secrets
 
 ## How everything connects
 ```
